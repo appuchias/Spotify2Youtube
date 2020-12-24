@@ -1,6 +1,5 @@
 # pylint: disable=wildcard-import, missing-module-docstring
 import tekore as tk
-from pprint import pprint
 
 client_id, client_secret, redirect_uri = tk.config_from_file(".env")
 
@@ -12,8 +11,12 @@ sp = tk.Spotify(token)
 user_id = input("User ID:\n> ")
 playlists = sp.playlists(user_id).items  # pylint: disable=E1101
 
-simple_playlist = playlists[0]
+p_id = playlists[0].id
 
-full_playlist = [track.track for track in sp.playlist(playlist_id=simple_playlist.id).tracks.items]
+full_playlist = [
+    track.track for track in sp.playlist(playlist_id=p_id).tracks.items  # pylint: disable=E1101
+]
 
-tracks = [(track.name, [artist.name for artist in track.artists]) for track in full_playlist]
+tracks = [
+    (track.name, [artist.name for artist in track.artists]) for track in full_playlist
+]
