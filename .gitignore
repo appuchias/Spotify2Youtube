@@ -2,4 +2,4 @@
 .vscode
 venv
 __pycache__
-temp.py
+db.sqlite3
