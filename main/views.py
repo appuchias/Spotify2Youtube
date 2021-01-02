@@ -3,6 +3,7 @@ from django.shortcuts import render
 # Create your views here.
 def home(response, statuscode: str = None):
     if statuscode:
+        print(statuscode)
         return render(response, "main/home.html", {"statuscode": statuscode})
     return render(response, "main/home.html")
 
