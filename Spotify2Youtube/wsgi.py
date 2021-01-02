@@ -1,5 +1,5 @@
 """
-WSGI config for Spoitify2Youtube project.
+WSGI config for Spotify2Youtube project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 
@@ -11,6 +11,6 @@ import os
 
 from django.core.wsgi import get_wsgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'Spoitify2Youtube.settings')
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "Spotify2Youtube.settings")
 
 application = get_wsgi_application()
