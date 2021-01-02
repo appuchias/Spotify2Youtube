@@ -14,7 +14,8 @@ playlists = sp.playlists(user_id).items  # pylint: disable=E1101
 p_id = playlists[0].id
 
 full_playlist = [
-    track.track for track in sp.playlist(playlist_id=p_id).tracks.items  # pylint: disable=E1101
+    track.track
+    for track in sp.playlist(playlist_id=p_id).tracks.items  # pylint: disable=E1101
 ]
 
 tracks = [
