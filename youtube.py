@@ -1,21 +1,16 @@
-# -*- coding: utf-8 -*-
-
-# Sample Python code for youtube.playlists.insert
-# See instructions for running these code samples locally:
-# https://developers.google.com/explorer-help/guides/code_samples#python
-
+# pylint: disable=no-member
 import os
+
+from pprint import pprint
 
 import google_auth_oauthlib.flow
 import googleapiclient.discovery
 import googleapiclient.errors
 
-scopes = ["https://www.googleapis.com/auth/youtube.readonly"]
+scopes = ["https://www.googleapis.com/auth/youtube"]
 
 
-def main():
-    # Disable OAuthlib's HTTPS verification when running locally.
-    # *DO NOT* leave this option enabled in production.
+def main(videos_q: list = None):
     os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 
     api_service_name = "youtube"
@@ -31,12 +26,30 @@ def main():
         api_service_name, api_version, credentials=credentials
     )
 
-    request = youtube.channels().list(  # pylint: disable=no-member
-        part="snippet,status", mine=True
+    playlist_create = youtube.playlists().insert(
+        part="snippet,status",
+        body={
+            "snippet": {
+                "title": "Sample playlist created via API",
+                "description": "This is a sample playlist description.",
+                "tags": ["sample playlist", "API call"],
+                "defaultLanguage": "en",
+            },
+            "status": {"privacyStatus": "private"},
+        },
     )
-    response = request.execute()
 
-    print(response)
+    playlist = playlist_create.execute()
+    playlist_id = playlist["id"]
+
+    videos_dict = (
+        youtube.search().list(part="snippet", maxResults=5, q="surfing").execute()
+    )
+
+    videos = videos_dict["items"]
+
+    pprint(videos)
+    pprint(playlist_id)
 
 
 if __name__ == "__main__":
