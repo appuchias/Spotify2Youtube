@@ -3,10 +3,10 @@ import tekore as tk
 
 
 def main():
-    client_id, client_secret, redirect_uri = tk.config_from_file(".env")
+    client_id, client_secret, _redirect_uri = tk.config_from_file(".env")
 
     token = tk.request_client_token(client_id, client_secret)
-    # token = tk.prompt_for_user_token(client_id, client_secret, redirect_uri)
+    # token = tk.prompt_for_user_token(client_id, client_secret, _redirect_uri)
 
     sp = tk.Spotify(token)
 
