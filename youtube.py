@@ -58,24 +58,10 @@ def youtube(songs_q: list = [], pname: str = "Playlist by API"):
                 .execute()["items"]
             )[0]
 
-            youtube.playlistItems().insert(
-                part="snippet",
-                body={
-                    "snippet": {
-                        "playlistId": playlist_id,
-                        "position": 0,
-                        "resourceId": {
-                            "kind": "youtube#video",
-                            "videoId": video["id"]["videoId"],
-                        },
-                    }
-                },
-            ).execute()
-
-            print(f" - Added \"{video['snippet']['title']}\" to the playlist\n")
-
-            sleep(0.5)
         except googleapiclient.errors.HttpError:
+            print(
+                " [!] Credentials 1 quota fulfilled.\n  -  Logging in with credentials 2.\n"
+            )
             youtube = login("client_secret2.json")
 
             video = (
@@ -86,6 +72,10 @@ def youtube(songs_q: list = [], pname: str = "Playlist by API"):
                 .execute()["items"]
             )[0]
 
+        finally:
+            video_id = video["id"]["videoId"]
+            video_title = video["snippet"]["title"]
+
             youtube.playlistItems().insert(
                 part="snippet",
                 body={
@@ -94,11 +84,17 @@ def youtube(songs_q: list = [], pname: str = "Playlist by API"):
                         "position": 0,
                         "resourceId": {
                             "kind": "youtube#video",
-                            "videoId": video["id"]["videoId"],
+                            "videoId": video_id,
                         },
                     }
                 },
             ).execute()
+
+            print(
+                f'\n - Added "{video_title}" to the playlist. (https://youtube.com/watch?v={video_id})'
+            )
+
+            sleep(0.5)
 
     print("\nDone adding songs")
 
