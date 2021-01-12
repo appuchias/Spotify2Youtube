@@ -1,6 +1,7 @@
 # pylint: disable=no-member
 import os
 from time import sleep
+from itertools import cycle
 
 import google_auth_oauthlib.flow
 import googleapiclient.discovery
@@ -8,8 +9,16 @@ import googleapiclient.errors
 
 scopes = ["https://www.googleapis.com/auth/youtube"]
 
+client_secrets = cycle(
+    ["client_secret.json", "client_secret2.json", "client_secret3.json"]
+)
 
-def login(credentials_file: str = "client_secret.json"):
+
+def _login():
+    global client_secrets
+
+    credentials_file = next(client_secrets)
+
     # General values
     os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"  # 0 if public
 
@@ -24,13 +33,12 @@ def login(credentials_file: str = "client_secret.json"):
         api_service_name, api_version, credentials=credentials
     )
 
+    print(credentials_file)
+
     return youtube
 
 
-def youtube(songs_q: list = [], pname: str = "Playlist by API"):
-    youtube = login("client_secret.json")
-
-    # Actual valuable traffic
+def _create_playlist(youtube, pname: str = "Playlist by API"):
     playlist_id = (
         youtube.playlists()
         .insert(
@@ -39,14 +47,29 @@ def youtube(songs_q: list = [], pname: str = "Playlist by API"):
                 "snippet": {
                     "title": pname,
                     "description": "Playlist from Spotify",
-                    "tags": ["By Appu", "Spotify"],
                     "defaultLanguage": "es",
                 },
-                "status": {"privacyStatus": "private"},
+                "status": {"privacyStatus": "unlisted"},
             },
         )
         .execute()
     )["id"]
+
+    return playlist_id
+
+
+def tracks2youtube(songs_q: list, pname: str):
+    youtube = _login()
+
+    # Actual valuable traffic
+    try:
+        playlist_id = _create_playlist(youtube, pname)
+    except googleapiclient.errors.HttpError:
+        print(
+            " [!] Credentials quota fulfilled.\n  -  Logging in with other credentials.\n"
+        )
+        youtube = _login()
+        playlist_id = _create_playlist(youtube, pname)
 
     for song in songs_q:
         try:
@@ -60,9 +83,9 @@ def youtube(songs_q: list = [], pname: str = "Playlist by API"):
 
         except googleapiclient.errors.HttpError:
             print(
-                " [!] Credentials 1 quota fulfilled.\n  -  Logging in with credentials 2.\n"
+                " [!] Credentials quota fulfilled.\n  -  Logging in with other credentials.\n"
             )
-            youtube = login("client_secret2.json")
+            youtube = _login()
 
             video = (
                 youtube.search()
@@ -100,9 +123,10 @@ def youtube(songs_q: list = [], pname: str = "Playlist by API"):
 
 
 if __name__ == "__main__":
-    youtube(
+    tracks2youtube(
         [
             ("I'll come back to you", ["Rxseboy", "Powfu"]),
             ("Throw it all away", ["Powfu", "Jomie"]),
-        ]
+        ],
+        "",
     )
