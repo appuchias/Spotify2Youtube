@@ -11,4 +11,4 @@ playlist_id = url_regex.search(
 tracks, playlist_name = spotify(playlist_id)
 print("\n - Spotify playlist tracks retrieval successful\n\n", end="")
 
-tracks2youtube(tracks, playlist_name)
+tracks2youtube(reversed(tracks), playlist_name)  # Reversed to keep the order
