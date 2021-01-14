@@ -18,6 +18,7 @@ def _login():
     global client_secrets
 
     credentials_file = next(client_secrets)
+    print(credentials_file)
 
     # General values
     os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"  # 0 if public
@@ -32,8 +33,6 @@ def _login():
     youtube = googleapiclient.discovery.build(
         api_service_name, api_version, credentials=credentials
     )
-
-    print(credentials_file)
 
     return youtube
 
@@ -55,7 +54,7 @@ def _create_playlist(youtube, pname: str = "Playlist by API"):
         .execute()
     )["id"]
 
-    return playlist_id
+    return playlist_id, f"https://www.youtube.com/playlist?list={playlist_id}"
 
 
 def tracks2youtube(songs_q: list, pname: str):
@@ -63,7 +62,7 @@ def tracks2youtube(songs_q: list, pname: str):
 
     # Actual valuable traffic
     try:
-        playlist_id = _create_playlist(youtube, pname)
+        playlist_id, playlist_link = _create_playlist(youtube, pname)
     except googleapiclient.errors.HttpError:
         print(
             " [!] Credentials quota fulfilled.\n  -  Logging in with other credentials.\n"
@@ -119,7 +118,7 @@ def tracks2youtube(songs_q: list, pname: str):
 
             sleep(0.5)
 
-    print("\nDone adding songs")
+    print(f"\nDone adding songs. Playlist: {playlist_link}")
 
 
 if __name__ == "__main__":
