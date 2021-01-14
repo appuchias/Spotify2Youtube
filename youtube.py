@@ -1,4 +1,6 @@
 # pylint: disable=no-member
+import youtube_relevance_checker
+
 import os
 from time import sleep
 from itertools import cycle
