@@ -1,5 +1,5 @@
 # pylint: disable=no-member
-import youtube_relevance_checker
+from youtube_relevance_checker import get_top_video
 
 import os
 from time import sleep
@@ -40,21 +40,43 @@ def _login():
 
 
 def _create_playlist(youtube, pname: str = "Playlist by API"):
-    playlist_id = (
-        youtube.playlists()
-        .insert(
-            part="snippet,status",
-            body={
-                "snippet": {
-                    "title": pname,
-                    "description": "Playlist from Spotify",
-                    "defaultLanguage": "es",
+    try:
+        playlist_id = (
+            youtube.playlists()
+            .insert(
+                part="snippet,status",
+                body={
+                    "snippet": {
+                        "title": pname,
+                        "description": "Playlist from Spotify",
+                        "defaultLanguage": "es",
+                    },
+                    "status": {"privacyStatus": "unlisted"},
                 },
-                "status": {"privacyStatus": "unlisted"},
-            },
+            )
+            .execute()
+        )["id"]
+    except googleapiclient.errors.HttpError:
+        print(
+            " [!] Credentials quota fulfilled.\n  -  Logging in with other credentials.\n"
         )
-        .execute()
-    )["id"]
+        youtube = _login()
+
+        playlist_id = (
+            youtube.playlists()
+            .insert(
+                part="snippet,status",
+                body={
+                    "snippet": {
+                        "title": pname,
+                        "description": "Playlist from Spotify",
+                        "defaultLanguage": "es",
+                    },
+                    "status": {"privacyStatus": "unlisted"},
+                },
+            )
+            .execute()
+        )["id"]
 
     return playlist_id, f"https://www.youtube.com/playlist?list={playlist_id}"
 
@@ -74,29 +96,32 @@ def tracks2youtube(songs_q: list, pname: str):
 
     for song in songs_q:
         try:
-            video = (
+            videos = (
                 youtube.search()
                 .list(
-                    part="snippet", maxResults=1, q=f"{song[0]}, {', '.join(song[1])}"
+                    part="snippet", maxResults=5, q=f"{song[0]} - {', '.join(song[1])}"
                 )
                 .execute()["items"]
-            )[0]
+            )
 
-        except googleapiclient.errors.HttpError:
+        except googleapiclient.errors.HttpError:  # Quota from credentials 1 fulfilled
             print(
                 " [!] Credentials quota fulfilled.\n  -  Logging in with other credentials.\n"
             )
             youtube = _login()
 
-            video = (
+            videos = (
                 youtube.search()
                 .list(
-                    part="snippet", maxResults=1, q=f"{song[0]}, {', '.join(song[1])}"
+                    part="snippet", maxResults=5, q=f"{song[0]}, {', '.join(song[1])}"
                 )
                 .execute()["items"]
-            )[0]
+            )
 
         finally:
+            assert len(videos) == 5, "Not enough videos"
+            video = get_top_video(videos, song)
+            print(video)
             video_id = video["id"]["videoId"]
             video_title = video["snippet"]["title"]
 
