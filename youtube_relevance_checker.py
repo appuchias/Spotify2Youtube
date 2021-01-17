@@ -17,7 +17,10 @@ def fmt(text):  # Remove "(),-" from the title
 tracks_score = 0
 
 
-def get_top_video(videos: list[dict], song: list[tuple]):
+def get_top_video(videos: list[dict], song: tuple):
+    assert type(videos) == list, "Videos type is not list"
+    assert type(song) == tuple, "Song type is not tuple"
+
     for video_dict in videos:
         score = 0
         video = dict2obj(video_dict)  # Get the video into a dict
