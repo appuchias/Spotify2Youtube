@@ -48,7 +48,8 @@ def get_top_video(videos: list[dict], song: tuple):
 
         score += extras * 5
 
-        if score >= tracks_score:  # Save best video (only last one)
+        # Save best video (first one by YouTube's relevance if multiple with the same score)
+        if score > tracks_score:
             tracks_score = score
             top_video = video_dict
 
