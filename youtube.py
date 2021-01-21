@@ -20,7 +20,7 @@ def _login():
     global client_secrets
 
     credentials_file = next(client_secrets)
-    print(credentials_file)
+    print("[" + credentials_file + "]\n")
 
     # General values
     os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"  # 0 if public
@@ -121,30 +121,37 @@ def tracks2youtube(songs_q: list, pname: str):
         finally:
             assert len(videos) == 5, "Not enough videos"
             video = get_top_video(videos, song)
-            print(video)
-            video_id = video["id"]["videoId"]
-            video_title = video["snippet"]["title"]
+            # print(video)
 
-            youtube.playlistItems().insert(
-                part="snippet",
-                body={
-                    "snippet": {
-                        "playlistId": playlist_id,
-                        "position": 0,
-                        "resourceId": {
-                            "kind": "youtube#video",
-                            "videoId": video_id,
-                        },
-                    }
-                },
-            ).execute()
+            # Avoid KeyError from getting videoId from a playlist
+            if not video["id"]["kind"] == "youtube#playlist":
+                video_id = video["id"]["videoId"]
+                video_title = video["snippet"]["title"]
+                video_url = f"https://youtube.com/watch?v={video_id}"
 
-            print(
-                f'\n - Added "{video_title}" to the playlist. (https://youtube.com/watch?v={video_id})'
-            )
+                youtube.playlistItems().insert(
+                    part="snippet",
+                    body={
+                        "snippet": {
+                            "playlistId": playlist_id,
+                            "position": 0,
+                            "resourceId": {
+                                "kind": "youtube#video",
+                                "videoId": video_id,
+                            },
+                        }
+                    },
+                ).execute()
 
-            sleep(0.5)
+                print(f'\n [✓] Added "{video_title}" to the playlist. ({video_url})')
 
+                sleep(0.5)
+            else:
+                print(
+                    f" [!] Playlist marked as top video. Oops!\n - ({video_title} - {video_url})"
+                )
+
+    print("\n" * 20)
     print(f"\nDone adding songs. Playlist: {playlist_link}")
 
 
