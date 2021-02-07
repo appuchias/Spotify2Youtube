@@ -1,6 +1,4 @@
 # pylint: disable=no-member
-from youtube_relevance_checker import get_top_video
-
 import os
 from time import sleep
 from itertools import cycle
@@ -81,78 +79,73 @@ def _create_playlist(youtube, pname: str = "Playlist by API"):
     return playlist_id, f"https://www.youtube.com/playlist?list={playlist_id}"
 
 
+def _search(youtube, q: str):
+    video = (
+        youtube.search()
+        .list(
+            part="snippet",
+            type="youtube#video",
+            maxResults=1,
+            q=q,
+            prettyPrint=True,
+        )
+        .execute()["items"][0]
+    )
+    return video
+
+
 def tracks2youtube(songs_q: list, pname: str):
     youtube = _login()
 
     # Actual valuable traffic
     try:
         playlist_id, playlist_link = _create_playlist(youtube, pname)
+
+    # Quota from credentials fulfilled
     except googleapiclient.errors.HttpError:
         print(
             " [!] Credentials quota fulfilled.\n  -  Logging in with other credentials.\n"
         )
         youtube = _login()
-        playlist_id = _create_playlist(youtube, pname)
+        playlist_id, playlist_link = _create_playlist(youtube, pname)
 
     for song in songs_q:
         try:
-            videos = (
-                youtube.search()
-                .list(
-                    part="snippet", maxResults=5, q=f"{song[0]} - {', '.join(song[1])}"
-                )
-                .execute()["items"]
-            )
+            video = _search(youtube, f"{song[0]} - {', '.join(song[1])}")
 
-        except googleapiclient.errors.HttpError:  # Quota from credentials 1 fulfilled
+        # Quota from credentials fulfilled
+        except googleapiclient.errors.HttpError:
             print(
                 " [!] Credentials quota fulfilled.\n  -  Logging in with other credentials.\n"
             )
             youtube = _login()
 
-            videos = (
-                youtube.search()
-                .list(
-                    part="snippet", maxResults=5, q=f"{song[0]}, {', '.join(song[1])}"
-                )
-                .execute()["items"]
+            video = _search(youtube, f"{song[0]} - {', '.join(song[1])}")
+
+        # Whichever the case it is
+        finally:
+            video_id = video["id"]["videoId"]
+            video_url = f"https://youtube.com/watch?v={video_id}"
+
+            youtube.playlistItems().insert(
+                part="snippet",
+                body={
+                    "snippet": {
+                        "playlistId": playlist_id,
+                        "position": 0,
+                        "resourceId": {
+                            "kind": "youtube#video",
+                            "videoId": video_id,
+                        },
+                    }
+                },
+            ).execute()
+
+            print(
+                f'\n [✓] Added "{video["snippet"]["title"]}" to the playlist. ({video_url})'
             )
 
-        finally:
-            assert len(videos) == 5, "Not enough videos"
-            video = get_top_video(videos, song)
-            # print(video)
-
-            # Avoid KeyError from getting videoId from a playlist
-            if not video["id"]["kind"] == "youtube#playlist":
-                video_id = video["id"]["videoId"]
-                video_title = video["snippet"]["title"]
-                video_url = f"https://youtube.com/watch?v={video_id}"
-
-                youtube.playlistItems().insert(
-                    part="snippet",
-                    body={
-                        "snippet": {
-                            "playlistId": playlist_id,
-                            "position": 0,
-                            "resourceId": {
-                                "kind": "youtube#video",
-                                "videoId": video_id,
-                            },
-                        }
-                    },
-                ).execute()
-
-                print(f'\n [✓] Added "{video_title}" to the playlist. ({video_url})')
-
-                sleep(0.5)
-            else:
-                print(
-                    f" [!] Playlist marked as top video. Oops!\n - ({video_title} - {video_url})"
-                )
-
-    print("\n" * 20)
-    print(f"\nDone adding songs. Playlist: {playlist_link}")
+    print("\n" * 5 + f"\nDone adding songs. Playlist: {playlist_link}")
 
 
 if __name__ == "__main__":
