@@ -3,13 +3,14 @@ from youtube import tracks2youtube
 from time import sleep
 from rich.console import Console
 from rich.table import Table
+from rich.traceback import install
 import re, os
+
+install()
 
 url_regex = re.compile(r"http(?:s)?://open.spotify.com/playlist/(.*)\?si=.*")
 
-playlist_id = url_regex.search(
-    input("Type the Spotify playlist URL to migrate:\n> ")
-).group(1)
+playlist_id = url_regex.search(input("Type the Spotify playlist URL to migrate:\n> ")).group(1)
 
 os.system("cls")
 
