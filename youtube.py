@@ -1,7 +1,7 @@
 # pylint: disable=no-member
 import os
-from time import sleep
 from itertools import cycle
+from rich.console import Console
 
 import google_auth_oauthlib.flow
 import googleapiclient.discovery
@@ -9,16 +9,15 @@ import googleapiclient.errors
 
 scopes = ["https://www.googleapis.com/auth/youtube"]
 
-client_secrets = cycle(
-    ["client_secret.json", "client_secret2.json", "client_secret3.json"]
-)
+client_secrets = cycle(["client_secret.json", "client_secret2.json", "client_secret3.json"])
+c = Console()
 
 
 def _login():
     global client_secrets
 
     credentials_file = next(client_secrets)
-    print("[" + credentials_file + "]\n")
+    c.print("[dim yellow][" + credentials_file + "]\n")
 
     # General values
     os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"  # 0 if public
@@ -55,8 +54,8 @@ def _create_playlist(youtube, pname: str = "Playlist by API"):
             .execute()
         )["id"]
     except googleapiclient.errors.HttpError:
-        print(
-            " [!] Credentials quota fulfilled.\n  -  Logging in with other credentials.\n"
+        c.print(
+            "[bold red] [!] Credentials quota fulfilled.\n  -  Logging in with other credentials.\n"
         )
         youtube = _login()
 
@@ -103,8 +102,8 @@ def tracks2youtube(songs_q: list, pname: str):
 
     # Quota from credentials fulfilled
     except googleapiclient.errors.HttpError:
-        print(
-            " [!] Credentials quota fulfilled.\n  -  Logging in with other credentials.\n"
+        c.print(
+            "[bold red] [!] Credentials quota fulfilled.\n  -  Logging in with other credentials.\n"
         )
         youtube = _login()
         playlist_id, playlist_link = _create_playlist(youtube, pname)
@@ -115,8 +114,8 @@ def tracks2youtube(songs_q: list, pname: str):
 
         # Quota from credentials fulfilled
         except googleapiclient.errors.HttpError:
-            print(
-                " [!] Credentials quota fulfilled.\n  -  Logging in with other credentials.\n"
+            c.print(
+                "[bold red] [!] Credentials quota fulfilled.\n  -  Logging in with other credentials.\n"
             )
             youtube = _login()
 
@@ -141,11 +140,11 @@ def tracks2youtube(songs_q: list, pname: str):
                 },
             ).execute()
 
-            print(
-                f'\n [✓] Added "{video["snippet"]["title"]}" to the playlist. ({video_url})'
+            c.print(
+                f'[bold green]\n [✓] Added "{video["snippet"]["title"]}" to the playlist. ({video_url})'
             )
 
-    print("\n" * 5 + f"\nDone adding songs. Playlist: {playlist_link}")
+    c.print("\n" * 5 + f"[bold green]\nDone adding songs. Playlist: {playlist_link}")
 
 
 if __name__ == "__main__":
