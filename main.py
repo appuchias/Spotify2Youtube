@@ -1,4 +1,4 @@
-from spotify import spotify
+from spotify import get_spotify_tracks
 from youtube import tracks2youtube
 from time import sleep
 from rich.console import Console
@@ -14,7 +14,7 @@ playlist_id = url_regex.search(input("Type the Spotify playlist URL to migrate:\
 
 os.system("cls")
 
-tracks, playlist_name = spotify(playlist_id)
+tracks, playlist_name = get_spotify_tracks(playlist_id)
 print(" [✓] Spotify playlist tracks retrieval successful\n")
 
 console = Console()
